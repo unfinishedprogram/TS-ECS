@@ -1,31 +1,25 @@
 import Component from "./component";
+import Velocity from "@/components/velocity";
 
-interface IQueryResult<T> {
-	size:number;
+type Instanced<C extends Component<any>> = C extends Component<infer T> ? T : unknown;
+
+export type QueryResult<Q extends IQueryParams> = {
+	[P in keyof Q]: Instanced<Q[P]>;
 }
-export interface IQueryPerams {
+export interface IQueryParams {
 	[key:string]:Component<unknown>
 }
 
-export default class Query<T extends IQueryPerams> {
+export default class Query<T extends IQueryParams> {
 	public componentIds:Set<number>;
 	public bitMask:number = 0;
-
-	equals(other:Query<T>):boolean {
-		if(other.componentIds.size != this.componentIds.size) return false;
-		for(let val of other.componentIds) {
-			if(!this.componentIds.has(val)) return false;
-		}
-		return true;
-	}
 
 	constructor(components: T) {
 		this.componentIds = new Set<number>();
 		
 		for (let comp in components) {
+			this.componentIds.add(components[comp].id);
 			this.bitMask |= 2 ** components[comp].id;
 		}
 	}
 }
-
-// type test = <[{ x: number; y: number;}]>(components_0: Component<{x: number; y: number;}>): Query<[{x: number;y: number;}]>
