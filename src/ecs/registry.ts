@@ -7,7 +7,6 @@ import System from "./system";
 
 export type InstancedQuerry<C extends Query<any>> = C extends Query<infer T> ? T : unknown;
 
-
 export default class Registry {
 	private entitiyManager = new InstanceManager<Entity>();
 	private registeredComponents: Record<number, Component<unknown>> = {};
@@ -79,7 +78,7 @@ export default class Registry {
 		this.registeredComponents[componentId] = component;
 	}
 
-	public getEntityIdsFromMask<Q>(bitMask:number):number[] {
+	private getEntityIdsFromMask<Q>(bitMask:number):number[] {
 		let archKeys = Object.keys(this.archtypes).map(Number);
 
 		let matches = archKeys.filter( key => Bitwise.hasAll(key, bitMask));
@@ -94,7 +93,7 @@ export default class Registry {
 		return entities;
 	}
 
-	public getEntitiesFromQuery<T extends IQueryParams>(query:Query<T>):QueryResult<T>[] {
+	private getEntitiesFromQuery<T extends IQueryParams>(query:Query<T>):QueryResult<T>[] {
 		let entityData: QueryResult<T>[] = [];
 		console.log(query.componentIds)
 
@@ -112,7 +111,7 @@ export default class Registry {
 		return entityData;
 	}
 
-	registerSystem(system:System<any>) {
+	public registerSystem(system:System<any>) {
 		this.systems.push(system);
 		if(system.methods.bind) {
 			this.getEntitiesFromQuery(system.query).forEach(entity => {
@@ -121,13 +120,13 @@ export default class Registry {
 		}
 	}
 
-	updateSystem<T extends IQueryParams>(system:System<T>) {
+	private updateSystem<T extends IQueryParams>(system:System<T>) {
 		if(system.methods.update) {
 			system.methods.update(10,this.getEntitiesFromQuery(system.query));
 		}
 	}
 
-	update() {
+	public update() {
 		this.systems.forEach(sys => {
 			this.updateSystem(sys);
 
