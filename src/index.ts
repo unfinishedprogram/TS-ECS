@@ -19,11 +19,6 @@ registry.registerComponent(Sprite);
 registry.registerSystem(Movement);
 registry.registerSystem(Renderer);
 
-
-// for(let i = 0; i < 1000; i++){
-// 	Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
-// }
-
 let step = () => {};
 let last = performance.now();
 let frames = 0;

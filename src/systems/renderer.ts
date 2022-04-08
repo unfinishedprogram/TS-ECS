@@ -6,7 +6,7 @@ import * as PIXI from "pixi.js"
 let app = new PIXI.Application();
 
 app.resizeTo = window;
-app.ticker.stop()
+app.ticker.stop();
 app.ticker.autoStart = false;
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -18,7 +18,6 @@ const Renderer = new System({Sprite, Position},
 		for(let entity of entities) {
 			entity.Sprite.sprite.position.set(entity.Position.x, entity.Position.y);
 		}
-		
 		app.render();
 	},
 
