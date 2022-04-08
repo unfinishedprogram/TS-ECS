@@ -1,8 +1,6 @@
 import Component from "@/ecs/component";
 
-const Velocity = new Component("Velocity", 
-() => {
-	return { x:0, y:0 };
-})
+const makeInstance = (x:number, y:number) => { return {x, y} };
+const Velocity = new Component("Velocity", makeInstance);
 
 export default Velocity;

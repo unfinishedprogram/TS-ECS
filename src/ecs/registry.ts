@@ -1,135 +1,127 @@
-import Bitwise, { decomposeBits } from "@/util/bitwise";
+import { decomposeBits } from "@/util/bitwise";
 import Component from "./component";
-import Entity from "./entity";
-import InstanceManager from "./instanceManager";
-import Query, { IQueryParams, QueryResult } from "./query";
 import System from "./system";
 
-export type InstancedQuerry<C extends Query<any>> = C extends Query<infer T> ? T : unknown;
+type Signature = number;
+type EID = number;
+type CID = number;
+type SID = number;
 
 export default class Registry {
-	private entitiyManager = new InstanceManager<Entity>();
-	private registeredComponents: Record<number, Component<unknown>> = {};
-	private componentInstances : Record<number, Record<number, Object>> = {};
-	private archtypes : Record<number, Set<number>> = {};
-	private systems : System<any>[] = [];
+	/************
+	 * ENTITIES *
+	 ************/
 
-	public bindComponent<T extends Object>(entityId:number, component:Component<T>) {
-		const entity = this.entitiyManager.get(entityId);
+	private freeEntityIds:Set<EID> = new Set();
+	private entityIdIndex = 0;
+	private entities:Set<EID> = new Set();
+	private entitySignatures:Record<EID, Signature> = {};
 
-		// Setting the corrisponding component bit on the bitmask
-		let oldMask = entity.bitMask;
-
-		entity.bitMask |= 2 ** component.id;
-		
-		this.updateArchtype(entityId, oldMask, entity.bitMask);
-		
-		this.componentInstances[component.id][entityId] = component.instantiate();
-	}
-
-	private updateArchtype(entityId:number, oldMask:number, newMask:number) {
-		if(!this.archtypes[newMask]) {
-			this.archtypes[newMask] = new Set<number>();
-		}
-
-		if(this.archtypes[oldMask]) {
-			this.archtypes[oldMask].delete(entityId);
-		}
-
-		this.archtypes[newMask].add(entityId);
-	}
-
-	private removeComponent(entityId:number, componentId:number) {
-		delete this.componentInstances[componentId][entityId];
-
-		let entity = this.entitiyManager.get(entityId);
-		let oldMask = entity.bitMask;
-
-		// Bitwise removal of component on mask
-		entity.bitMask &= ((~0>>>1) - (2 ** componentId));
-
-		this.updateArchtype(entityId, oldMask, entity.bitMask);
+	removeEntity(eid:EID) {
+		// Decompose signature
+		decomposeBits(this.entitySignatures[eid]).forEach(cid => {
+			this.unbindComponent(cid, this.componentFromId[eid]);
+		})
+		delete this.entitySignatures[eid];
+		this.entities.delete(eid);
+		this.freeEntityIds.add(eid);
 	}
 	
-	public destroyEntity(entityId:number) {
-		const entity = this.entitiyManager.get(entityId);
-		
-		let compIds = decomposeBits(entity.bitMask);
+	createEntity():EID {
+		const freeIds = [...this.freeEntityIds.values()];
+		const eid = freeIds.length ? freeIds[0] : this.entityIdIndex++;
+		this.freeEntityIds.delete(eid);
+		this.entities.add(eid)
+		this.entitySignatures[eid] = 0;
 
-		this.archtypes[entity.bitMask].delete(entityId);
-
-		for(let id of compIds) {
-			delete this.componentInstances[id][entityId]
-		}
-
-		this.entitiyManager.remove(entityId);
+		return eid;
 	}
 
-	public createEntity() {
-		let entity = new Entity();
-		this.entitiyManager.add(entity);
-		return entity.getId();
-	}
+	/**************
+	 * COMPONENTS *
+	 **************/
 
-	public registerComponent<T extends Object> (component : Component<T>) {
+	private componentIdIndex = 0;
+	private freeComponentIds:Set<EID> = new Set();
+	private componentIds:Map<Component<any>, CID> = new Map();
+	private componentFromId:Record<number, Component<any>> = {};
+	private components:Record<CID, Record<EID, Object>> = {};
+
+	public registerComponent<IInst extends Function>(component : Component<IInst>) {
 		console.log("Registered", component);
-		const componentId = component.id;
-		this.componentInstances[componentId] = {};
-		this.registeredComponents[componentId] = component;
+		this.componentIds.set(component, this.componentIdIndex++);
+		this.componentFromId[this.componentIds.get(component)!] = component;
+		this.components[this.componentIds.get(component)!] = {};
 	}
 
-	private getEntityIdsFromMask<Q>(bitMask:number):number[] {
-		let archKeys = Object.keys(this.archtypes).map(Number);
+	public bindComponent<IInst extends (...args:any) => any> (
+		eid:EID, 
+		component : Component<IInst>,
+		...args: Parameters<(typeof component)["instantiate"]>
+	) {
+		let cid:CID = this.componentIds.get(component)!;
 
-		let matches = archKeys.filter( key => Bitwise.hasAll(key, bitMask));
-		console.log(archKeys)
+		this.components[cid][eid] = component.instantiate(args);
+		this.entitySignatures[eid] |= 2 ** cid;
+	}
 
-		let entities: number[] = [];
+	public unbindComponent<IInst extends (...args:any) => any>(
+		eid: EID, 
+		component: Component<IInst>
+	) {
+		let cid:CID = this.componentIds.get(component)!;
+		delete this.components[cid][eid];
+		this.entitySignatures[eid] &= ((~0>>>1) - (2 ** cid));
+	}
 
-		matches.forEach(match => {
-			entities.push(...this.archtypes[match]);
+	/***********
+	 * SYSTEMS *
+	 ***********/
+
+	 private systemIdIndex = 0;
+	 private freeSystemIds:Set<SID> = new Set();
+	 private systemIds:Map<System<any>, SID> = new Map();
+	 private systems:Record<SID, System<any>> = {};
+
+	registerSystem(system : System<any>) {
+		console.log("Registered", system);
+		this.systemIds.set(system, this.systemIdIndex++);
+		this.systems[this.systemIds.get(system)!] = system;
+	}
+
+	removeSystem(system : System<any>) {
+		console.log("Removing", system);
+		delete this.systems[this.systemIds.get(system)!];
+		this.systemIds.delete(system);
+	}
+
+	/*********************************
+	 * SIGNATURE MATCHING / CACHEING *
+	 *********************************/
+
+	private cachedSignatures:Set<Signature> = new Set();
+	private signatureCache:Map<Signature, Set<EID>> = new Map();
+
+	private getCachedSignaturesMatching(signature:Signature) {
+		
+		let matches = new Set<Signature>();
+
+		this.cachedSignatures.forEach(sig => {
+			if(signature & sig) {
+				matches.add(sig);
+			}
 		})
 
-		return entities;
+		return matches;
 	}
 
-	private getEntitiesFromQuery<T extends IQueryParams>(query:Query<T>):QueryResult<T>[] {
-		let entityData: QueryResult<T>[] = [];
-		console.log(query.componentIds)
+	private getEntitiesWithSignatures(signatures: Set<Signature>) {
+		let entities:EID[] = [];
 
-		let eids = this.getEntityIdsFromMask(query.bitMask);
-		// console.log(eids);
-		eids.forEach(eid => {
-			let entity:any = {};
-			
-			query.componentIds.forEach(cid => {
-				entity[this.registeredComponents[cid].name] = this.componentInstances[cid][eid]
-			})
-			entityData.push(entity);
+		signatures.forEach(sig => {
+			entities.push(...this.signatureCache.get(sig)!.values())
 		})
 
-		return entityData;
-	}
-
-	public registerSystem(system:System<any>) {
-		this.systems.push(system);
-		if(system.methods.bind) {
-			this.getEntitiesFromQuery(system.query).forEach(entity => {
-				system.methods.bind!(entity);
-			});
-		}
-	}
-
-	private updateSystem<T extends IQueryParams>(system:System<T>) {
-		if(system.methods.update) {
-			system.methods.update(10,this.getEntitiesFromQuery(system.query));
-		}
-	}
-
-	public update() {
-		this.systems.forEach(sys => {
-			this.updateSystem(sys);
-
-		})
+		return new Set(entities);
 	}
 }

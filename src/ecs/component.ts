@@ -1,12 +1,12 @@
-export default class Component<T> {
-	static currentId = 0;
-	static assignId():number {
-		return Component.currentId++;
-	}
+export default class Component<TInst extends Function> {
+	public name:string;
+	public instantiate: TInst;
 
-	public id:number;
-	
-	constructor(public name:string, public instantiate : () =>  T){
-		this.id = Component.assignId();
+	constructor(
+		name:string, 
+		instantiate: TInst,
+	) {
+		this.instantiate = instantiate;
+		this.name = name;
 	};
 }

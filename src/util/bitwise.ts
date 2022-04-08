@@ -1,3 +1,5 @@
+import Component from "@/ecs/component";
+
 // Decomposes bits into an array of indexes, or ids of components
 export function decomposeBits(mask:number):number[] {
 	let arr:number[] = [];

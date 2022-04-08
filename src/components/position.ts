@@ -1,8 +1,8 @@
 import Component from "@/ecs/component";
 
-const Position = new Component("Position",
-() => {
-	return { x:0, y:0 };
-})
+const Position = new Component (
+	"Position", (x:number, y:number) => {
+		return { x:x, y:y };
+	});
 
 export default Position;
