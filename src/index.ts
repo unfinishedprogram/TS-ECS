@@ -20,16 +20,14 @@ registry.registerSystem(Movement);
 registry.registerSystem(Renderer);
 
 
-for(let i = 0; i < 50; i++){
+for(let i = 0; i < 10000; i++){
 	Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
 }
 
-
-console.log(registry.getEntityObjectsMatchingSignature(registry.constructSignature(Sprite)));
-
-
-setInterval(() => {
+let step = () => {};
+step = () => {
 	registry.updateSystems();
-}, 10)
+	requestAnimationFrame(step);
+}
 
-console.log(registry);
+step();

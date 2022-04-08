@@ -9,7 +9,7 @@ type InstancedComponents<TComps extends ISystemComponents> = {
 }
 
 interface IUpdateFunction<T extends ISystemComponents> {
-	(t:number, data:InstancedComponents<T>[]):void;
+	(t:number, data:IterableIterator<InstancedComponents<T>>):void;
 }
 
 interface IBindFunction<T extends ISystemComponents> {

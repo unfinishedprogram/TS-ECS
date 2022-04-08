@@ -86,12 +86,14 @@ export default class Registry {
 
 	 private systemIdIndex = 0;
 	 private freeSystemIds:Set<SID> = new Set();
+	 private systemSignatures = new Map<SID, Signature>();
 	 private systemIds:Map<System<any>, SID> = new Map();
 	 private systems:Record<SID, System<any>> = {};
 
 	registerSystem(system : System<any>) {
 		console.log("Registered", system);
 		this.systemIds.set(system, this.systemIdIndex++);
+		this.systemSignatures.set(this.systemIds.get(system)!, this.constructSignature(...Object.values(system.components) as any))
 		this.systems[this.systemIds.get(system)!] = system;
 	}
 
@@ -102,13 +104,13 @@ export default class Registry {
 	}
 
 	updateSystems(){
-		this.systemIds.forEach(id => {
+		for(let id of this.systemIds.values()) {
 			this.updateSystem(this.systems[id]);
-		})
+		}
 	}
 
 	updateSystem(system : System<any>) {
-		system.update!(1, this.getEntityObjectsMatchingSignature(this.constructSignature(...Object.values(system.components) as any)));
+		system.update!(1, this.getEntityObjectsMatchingSignature(this.systemSignatures.get(this.systemIds.get(system)!)!) as any);
 	}
 
 	/*********************************
@@ -190,29 +192,28 @@ export default class Registry {
 		return obj;
 	}
 
-	public getEntityObjectsMatchingSignature(signature:Signature) {
+	public *getEntityObjectsMatchingSignature(signature:Signature):Iterable<Object> {
 		let entities:Object[] = []
 		let matchingSigs = this.getCachedSignaturesMatching(signature);
-		let entitiyIds = this.getEntitiesWithSignatures(matchingSigs);
 
-		entitiyIds.forEach(eid => {
-			entities.push(this.getEntityAsObject(eid));
-		})
-
-		return entities;
+		for (let sig of matchingSigs.values()) {
+			for(let eid of this.signatureCache.get(sig)?.values()!) {
+				yield this.getEntityAsObject(eid);
+			}
+		}
 	}
 
 	public getSystemsMatchingSignature(signature:Signature) {
 		let systems:System<any>[] = [];
 
-		Object.values(this.systems).forEach(sys => {
+		for(let sys of Object.values(this.systems)) {
 			let sysSig = this.constructSignature(...Object.values(sys.components) as any);
 
 			if( ((sysSig & signature) ==  sysSig) && signature != 0){
 				systems.push(sys);
 			}
+		}
 
-		})
 		return systems;
 	}
 }

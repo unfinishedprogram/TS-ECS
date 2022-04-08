@@ -3,7 +3,10 @@ import Sprite from "@/components/sprite";
 import Position from "@/components/position";
 import * as PIXI from "pixi.js"
 
-let app = new PIXI.Application({ width: 640, height: 360 });
+let app = new PIXI.Application();
+app.resizeTo = window;
+app.ticker.stop()
+app.ticker.autoStart = false;
 
 window.addEventListener("DOMContentLoaded", () => {
 	document.body.appendChild(app.view);
@@ -11,16 +14,14 @@ window.addEventListener("DOMContentLoaded", () => {
 
 const Renderer = new System({Sprite, Position},  
 	(t:number, entities) => {
-		entities.forEach(entity => {
+		for(let entity of entities) {
 			entity.Sprite.sprite.position.set(entity.Position.x, entity.Position.y);
-		});
-		console.log("rendering")
+		}
+
 		app.render();
 	},
 
 	(entity) => {
-		console.log(entity);
-		console.log("Binding child");
 		app.stage.addChild(entity.Sprite.sprite)
 	},
 
