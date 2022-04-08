@@ -8,6 +8,7 @@ import Sprite from "@/components/sprite";
 // Systems
 import Renderer from "./systems/renderer";
 import Sonic from "./entities/sonic";
+import Movement from "./systems/movement";
 
 let registry = new Registry();
 
@@ -15,16 +16,20 @@ registry.registerComponent(Position);
 registry.registerComponent(Velocity);
 registry.registerComponent(Sprite);
 
+registry.registerSystem(Movement);
 registry.registerSystem(Renderer);
 
 
-Sonic(registry, 0, 0, 1, 1);
+for(let i = 0; i < 50; i++){
+	Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
+}
+
+
+console.log(registry.getEntityObjectsMatchingSignature(registry.constructSignature(Sprite)));
+
+
+setInterval(() => {
+	registry.updateSystems();
+}, 10)
 
 console.log(registry);
-
-registry.registerSystem(Renderer);
-
-console.log(registry);
-
-// registry.update();
-

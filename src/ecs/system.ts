@@ -26,5 +26,6 @@ interface IUnbindFunction<T extends ISystemComponents> {
 		public bind?:IBindFunction<C>,
 		public unbind?:IUnbindFunction<C>
 	){
+		
 	}
 }

@@ -14,11 +14,13 @@ const Renderer = new System({Sprite, Position},
 		entities.forEach(entity => {
 			entity.Sprite.sprite.position.set(entity.Position.x, entity.Position.y);
 		});
-
+		console.log("rendering")
 		app.render();
 	},
 
 	(entity) => {
+		console.log(entity);
+		console.log("Binding child");
 		app.stage.addChild(entity.Sprite.sprite)
 	},
 

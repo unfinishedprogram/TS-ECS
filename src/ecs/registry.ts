@@ -1,4 +1,5 @@
 import { decomposeBits } from "@/util/bitwise";
+import { sign } from "@pixi/utils";
 import Component from "./component";
 import System from "./system";
 
@@ -19,6 +20,10 @@ export default class Registry {
 
 	removeEntity(eid:EID) {
 		// Decompose signature
+		let entitySignature = this.entitySignatures[eid];
+
+		this.signatureCache.get(entitySignature)?.delete(eid);
+
 		decomposeBits(this.entitySignatures[eid]).forEach(cid => {
 			this.unbindComponent(cid, this.componentFromId[eid]);
 		})
@@ -59,19 +64,20 @@ export default class Registry {
 		component : Component<IInst>,
 		...args: Parameters<(typeof component)["instantiate"]>
 	) {
+		this.removeSignature(eid, this.entitySignatures[eid]);
 		let cid:CID = this.componentIds.get(component)!;
-
-		this.components[cid][eid] = component.instantiate(args);
-		this.entitySignatures[eid] |= 2 ** cid;
+		this.components[cid][eid] = component.instantiate(...(args as IterableIterator<unknown>));
+		this.addSignature(eid, this.entitySignatures[eid] | 2 ** cid);
 	}
 
 	public unbindComponent<IInst extends (...args:any) => any>(
 		eid: EID, 
 		component: Component<IInst>
 	) {
+		this.removeSignature(eid, this.entitySignatures[eid]);
 		let cid:CID = this.componentIds.get(component)!;
 		delete this.components[cid][eid];
-		this.entitySignatures[eid] &= ((~0>>>1) - (2 ** cid));
+		this.addSignature(eid, this.entitySignatures[eid] & ((~0>>>1) - (2 ** cid)));
 	}
 
 	/***********
@@ -95,24 +101,58 @@ export default class Registry {
 		this.systemIds.delete(system);
 	}
 
+	updateSystems(){
+		this.systemIds.forEach(id => {
+			this.updateSystem(this.systems[id]);
+		})
+	}
+
+	updateSystem(system : System<any>) {
+		system.update!(1, this.getEntityObjectsMatchingSignature(this.constructSignature(...Object.values(system.components) as any)));
+	}
+
 	/*********************************
 	 * SIGNATURE MATCHING / CACHEING *
 	 *********************************/
 
-	private cachedSignatures:Set<Signature> = new Set();
 	private signatureCache:Map<Signature, Set<EID>> = new Map();
 
 	private getCachedSignaturesMatching(signature:Signature) {
-		
 		let matches = new Set<Signature>();
 
-		this.cachedSignatures.forEach(sig => {
+		this.signatureCache.forEach((val, sig) => {
 			if(signature & sig) {
 				matches.add(sig);
 			}
 		})
 
 		return matches;
+	}
+
+	public removeSignature(eid:EID, sig:Signature) {
+		this.getSystemsMatchingSignature(sig).forEach(sys => {
+			if(sys.unbind){
+				sys.unbind(this.getEntityAsObject(eid));
+			}
+		})
+
+		this.signatureCache.get(sig)?.delete(eid);
+	}
+
+	public addSignature(eid:EID, sig:Signature) {
+		this.entitySignatures[eid] = sig;
+
+		if(!this.signatureCache.has(sig)) {
+			this.signatureCache.set(sig, new Set([eid]));
+		} else {
+			this.signatureCache.get(sig)?.add(eid);
+		}
+
+		this.getSystemsMatchingSignature(sig).forEach(sys => {
+			if(sys.bind){
+				sys.bind(this.getEntityAsObject(eid));
+			}
+		})
 	}
 
 	private getEntitiesWithSignatures(signatures: Set<Signature>) {
@@ -123,5 +163,56 @@ export default class Registry {
 		})
 
 		return new Set(entities);
+	}
+
+	/*******************
+	 * ENTITY QUERYING *
+	 *******************/
+
+	constructSignature(...components:Component<any>[]) {
+		let sig:Signature = 0;
+
+		components.forEach(comp => {
+			sig |= 2 ** this.componentIds.get(comp)!;
+		})
+
+		return sig;
+	}
+
+
+	private getEntityAsObject(eid:EID) {
+		let obj:any = {};
+
+		decomposeBits(this.entitySignatures[eid]).forEach(cid => {
+			obj[this.componentFromId[cid].name] = this.components[cid][eid];
+		})
+
+		return obj;
+	}
+
+	public getEntityObjectsMatchingSignature(signature:Signature) {
+		let entities:Object[] = []
+		let matchingSigs = this.getCachedSignaturesMatching(signature);
+		let entitiyIds = this.getEntitiesWithSignatures(matchingSigs);
+
+		entitiyIds.forEach(eid => {
+			entities.push(this.getEntityAsObject(eid));
+		})
+
+		return entities;
+	}
+
+	public getSystemsMatchingSignature(signature:Signature) {
+		let systems:System<any>[] = [];
+
+		Object.values(this.systems).forEach(sys => {
+			let sysSig = this.constructSignature(...Object.values(sys.components) as any);
+
+			if( ((sysSig & signature) ==  sysSig) && signature != 0){
+				systems.push(sys);
+			}
+
+		})
+		return systems;
 	}
 }
