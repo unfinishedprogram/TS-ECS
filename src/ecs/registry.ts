@@ -1,5 +1,4 @@
 import { decomposeBits } from "@/util/bitwise";
-import { sign } from "@pixi/utils";
 import Component from "./component";
 import System from "./system";
 
@@ -103,14 +102,14 @@ export default class Registry {
 		this.systemIds.delete(system);
 	}
 
-	updateSystems(){
+	updateSystems(delta:number){
 		for(let id of this.systemIds.values()) {
-			this.updateSystem(this.systems[id]);
+			this.updateSystem(this.systems[id], delta);
 		}
 	}
 
-	updateSystem(system : System<any>) {
-		system.update!(1, this.getEntityObjectsMatchingSignature(this.systemSignatures.get(this.systemIds.get(system)!)!) as any);
+	updateSystem(system : System<any>, delta:number) {
+		system.update!(delta, this.getEntityObjectsMatchingSignature(this.systemSignatures.get(this.systemIds.get(system)!)!) as any);
 	}
 
 	/*********************************

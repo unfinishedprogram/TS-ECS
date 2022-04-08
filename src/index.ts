@@ -20,14 +20,30 @@ registry.registerSystem(Movement);
 registry.registerSystem(Renderer);
 
 
-for(let i = 0; i < 10000; i++){
-	Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
-}
+// for(let i = 0; i < 1000; i++){
+// 	Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
+// }
 
 let step = () => {};
+let last = performance.now();
+let frames = 0;
+let frametimes:number[] = [];
 step = () => {
-	registry.updateSystems();
-	requestAnimationFrame(step);
+	let now = performance.now()
+	let delta = now - last;
+	frametimes.push(delta);
+	last = now;
+	registry.updateSystems(delta);
+
+	for(let i = 0; i < 10; i++){
+		Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
+	}
+
+	if(frames < 5000){
+		frames = requestAnimationFrame(step);
+	} else {
+		console.log(frametimes)
+	}
 }
 
 step();

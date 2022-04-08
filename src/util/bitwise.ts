@@ -1,8 +1,8 @@
-import Component from "@/ecs/component";
-
 // Decomposes bits into an array of indexes, or ids of components
-
 const decomposeCache:Record<number, number[]> = {};
+
+
+// TODO there is probably a faster way of doing this.
 
 export function decomposeBits(mask:number):number[] {
 	if(decomposeCache[mask]) return decomposeCache[mask];
@@ -17,12 +17,3 @@ export function decomposeBits(mask:number):number[] {
 
 	return arr;
 }
-
-// Bitwise namespace
-const Bitwise = {
-	hasAll(a:number, b:number):boolean {
-		return (a & b) === b;
-	}
-}
-
-export default Bitwise;
