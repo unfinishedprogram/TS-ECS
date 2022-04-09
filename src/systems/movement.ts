@@ -19,7 +19,7 @@ const Movement = new System({Velocity, Position},
 			entity.Position.x += entity.Velocity.x * t/10;
 			entity.Position.y += entity.Velocity.y * t/10;
 
-			let dist = 0.1 / ((entity.Position.x - mouseX ) ** 2 + (entity.Position.y - mouseY) ** 2) ** 0.6 * t/10;
+			let dist = 0.1 / ((entity.Position.x - mouseX ) ** 2 + (entity.Position.y - mouseY) ** 2) ** 0.6 * t/10 + 0.5;
 
 			entity.Velocity.x -= (entity.Position.x - mouseX) * dist
 			entity.Velocity.y -= (entity.Position.y - mouseY) * dist

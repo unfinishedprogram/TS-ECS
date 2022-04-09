@@ -1,7 +1,3 @@
-// export interface IComponentInstantiator {
-// 	(...args : any[]): Object;
-// }
-
 export type ComponentInstantiator = (...args : any[]) => Object;
 
 export default class Component<T extends ComponentInstantiator>{
