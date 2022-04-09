@@ -1,5 +1,5 @@
 import { decomposeBits } from "@/util/bitwise";
-import Component from "./component";
+import Component, { ComponentInstantiator } from "./component";
 import System from "./system";
 
 type Signature = number;
@@ -51,27 +51,29 @@ export default class Registry {
 	private componentFromId:Record<number, Component<any>> = {};
 	private components:Record<CID, Record<EID, Object>> = {};
 
-	public registerComponent<IInst extends Function>(component : Component<IInst>) {
+	public registerComponent(component : Component<any>) {
 		console.log("Registered", component);
 		this.componentIds.set(component, this.componentIdIndex++);
 		this.componentFromId[this.componentIds.get(component)!] = component;
 		this.components[this.componentIds.get(component)!] = {};
 	}
 
-	public bindComponent<IInst extends (...args:any) => any> (
+	public bindComponent<T extends ComponentInstantiator> (
 		eid:EID, 
-		component : Component<IInst>,
+		component : Component<T>,
 		...args: Parameters<(typeof component)["instantiate"]>
 	) {
 		this.removeSignature(eid, this.entitySignatures[eid]);
 		let cid:CID = this.componentIds.get(component)!;
-		this.components[cid][eid] = component.instantiate(...(args as IterableIterator<unknown>));
+
+		this.components[cid][eid] = component.instantiate(...args);
+
 		this.addSignature(eid, this.entitySignatures[eid] | 2 ** cid);
 	}
 
-	public unbindComponent<IInst extends (...args:any) => any>(
-		eid: EID, 
-		component: Component<IInst>
+	public unbindComponent<T extends ComponentInstantiator>(
+		eid: EID,
+		component: Component<T>
 	) {
 		this.removeSignature(eid, this.entitySignatures[eid]);
 		let cid:CID = this.componentIds.get(component)!;

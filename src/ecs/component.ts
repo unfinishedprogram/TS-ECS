@@ -1,10 +1,16 @@
-export default class Component<TInst extends Function> {
+// export interface IComponentInstantiator {
+// 	(...args : any[]): Object;
+// }
+
+export type ComponentInstantiator = (...args : any[]) => Object;
+
+export default class Component<T extends ComponentInstantiator>{
 	public name:string;
-	public instantiate: TInst;
+	public instantiate: T;
 
 	constructor(
 		name:string, 
-		instantiate: TInst,
+		instantiate: T,
 	) {
 		this.instantiate = instantiate;
 		this.name = name;
