@@ -1,44 +1,97 @@
-import Registry from "@/ecs/registry";
+// import Registry from "@/ecs/registry";
 
-// Components
-import Position from "@/components/position";
-import Velocity from "@/components/velocity";
-import Sprite from "@/components/sprite";
+import SimplexNoise from "simplex-noise";
+import MarchingSquares from "./mapProcessing/marchingSquares";
+import { drawMap, genMap } from "./mapProcessing/noiseGen";
 
-// Systems
-import Renderer from "./systems/renderer";
-import Sonic from "./entities/sonic";
-import Movement from "./systems/movement";
+// // Components
+// import Position from "@/components/position";
+// import Velocity from "@/components/velocity";
+// import Sprite from "@/components/sprite";
 
-let registry = new Registry();
+// // Systems
+// import Renderer from "./systems/renderer";
+// import Sonic from "./entities/sonic";
+// import Movement from "./systems/movement";
 
-registry.registerComponent(Position);
-registry.registerComponent(Velocity);
-registry.registerComponent(Sprite);
+// let registry = new Registry();
 
-registry.registerSystem(Movement);
-registry.registerSystem(Renderer);
+// registry.registerComponent(Position);
+// registry.registerComponent(Velocity);
+// registry.registerComponent(Sprite);
 
-let step = () => {};
-let last = performance.now();
-let frames = 0;
-let frametimes:number[] = [];
-step = () => {
-	let now = performance.now()
-	let delta = now - last;
-	frametimes.push(delta);
-	last = now;
-	registry.updateSystems(delta);
+// registry.registerSystem(Movement);
+// registry.registerSystem(Renderer);
 
-	for(let i = 0; i < 10; i++){
-		Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
-	}
+// let step = () => {};
+// let last = performance.now();
+// let frames = 0;
+// let frametimes:number[] = [];
+// step = () => {
+// 	let now = performance.now()
+// 	let delta = now - last;
+// 	frametimes.push(delta);
+// 	last = now;
+// 	registry.updateSystems(delta);
 
-	if(frames < 5000){
-		frames = requestAnimationFrame(step);
-	} else {
-		console.log(frametimes)
-	}
-}
+// 	for(let i = 0; i < 10; i++){
+// 		Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
+// 	}
 
-step();
+// 	if(frames < 5000){
+// 		frames = requestAnimationFrame(step);
+// 	} else {
+// 		console.log(frametimes)
+// 	}
+// }
+
+// step();
+
+window.addEventListener("DOMContentLoaded", () => {
+	let res = 128;
+	let area = 1024
+	let scale = area/res;
+	
+	let nmap = genMap(area, res * 8);
+
+	// drawMap(res * 8, nmap);
+
+	let simplex = new SimplexNoise("seed");
+
+	let c = document.createElement("canvas");
+
+	c.width = 1024*4;
+	c.height = 1024*4;
+	
+	let ctx = c.getContext("2d")!;
+	ctx.lineWidth = 4;
+
+	document.body.appendChild(c);
+
+	let map = MarchingSquares.getCornerWeights(res, (x, y) => 
+		Math.min(
+			simplex.noise2D((x * scale) / 64, (y * scale)/64),
+			simplex.noise2D((x * scale) / 64, (y * scale)/128), 
+			simplex.noise2D((x * scale) / 256,(y * scale)/256),
+			simplex.noise2D((x * scale) / 512,(y * scale)/512)
+		)
+	);
+
+	let iso = 0.6;
+
+	// setInterval(() => {
+	// 	ctx.clearRect(0, 0, c.width, c.height)
+	// 	let lines = MarchingSquares.getLines(map, iso);
+	// 	MarchingSquares.drawLines(ctx, lines, scale * 16, iso);
+	// 	iso+=0.001;
+	// }, 100)
+
+
+
+	let lines = MarchingSquares.getLines(map, iso);
+
+	MarchingSquares.drawLines(ctx, lines, scale *4, iso);
+
+	// MarchingSquares.drawPointValues(ctx, iso, scale * 16, map);
+})
+
