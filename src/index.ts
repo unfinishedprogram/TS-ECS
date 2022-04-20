@@ -1,8 +1,9 @@
 // import Registry from "@/ecs/registry";
 
-import SimplexNoise from "simplex-noise";
+import { drawGeo, linesToGeo, mergeClose, separateDisconnected } from "./geometry/geometry";
+import { altCalcVertCount, calcVertCount, createMapGeometry } from "./mapProcessing/marching";
 import MarchingSquares from "./mapProcessing/marchingSquares";
-import { drawMap, genMap } from "./mapProcessing/noiseGen";
+import { sumOctave } from "./util/noise";
 
 // // Components
 // import Position from "@/components/position";
@@ -24,18 +25,20 @@ import { drawMap, genMap } from "./mapProcessing/noiseGen";
 // registry.registerSystem(Renderer);
 
 // let step = () => {};
+
 // let last = performance.now();
 // let frames = 0;
 // let frametimes:number[] = [];
+
 // step = () => {
-// 	let now = performance.now()
+// 	let now = performance.now();
 // 	let delta = now - last;
 // 	frametimes.push(delta);
 // 	last = now;
 // 	registry.updateSystems(delta);
 
 // 	for(let i = 0; i < 10; i++){
-// 		Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
+// 		Sonic(registry, Math.random() , Math.random() , Math.random() , Math.random());
 // 	}
 
 // 	if(frames < 5000){
@@ -47,51 +50,46 @@ import { drawMap, genMap } from "./mapProcessing/noiseGen";
 
 // step();
 
+const qFunc = (x:number, y:number) => sumOctave(32, x, y, 0.5, 0.01, -2, 2);
+
 window.addEventListener("DOMContentLoaded", () => {
-	let res = 128;
-	let area = 1024
-	let scale = area/res;
-	
-	let nmap = genMap(area, res * 8);
-
-	// drawMap(res * 8, nmap);
-
-	let simplex = new SimplexNoise("seed");
-
 	let c = document.createElement("canvas");
+	let res = 128;
+	let area = 128;
 
-	c.width = 1024*4;
-	c.height = 1024*4;
+	let scale = (area/res) * 4;
+
+	c.width = 512;
+	c.height = 512;
 	
 	let ctx = c.getContext("2d")!;
-	ctx.lineWidth = 4;
 
+	ctx.lineWidth = 0.5;
+	ctx.strokeStyle = "white"
 	document.body.appendChild(c);
 
-	let map = MarchingSquares.getCornerWeights(res, (x, y) => 
-		Math.min(
-			simplex.noise2D((x * scale) / 64, (y * scale)/64),
-			simplex.noise2D((x * scale) / 64, (y * scale)/128), 
-			simplex.noise2D((x * scale) / 256,(y * scale)/256),
-			simplex.noise2D((x * scale) / 512,(y * scale)/512)
-		)
-	);
+	let iso = 1.8;
 
-	let iso = 0.6;
+	// let map = createMapGeometry(8, 32, 0, 0, iso, qFunc);
+	// console.log(map);
 
-	// setInterval(() => {
-	// 	ctx.clearRect(0, 0, c.width, c.height)
-	// 	let lines = MarchingSquares.getLines(map, iso);
-	// 	MarchingSquares.drawLines(ctx, lines, scale * 16, iso);
-	// 	iso+=0.001;
-	// }, 100)
+	// let weights = MarchingSquares.getCornerWeights(0, 0, area, res, qFunc);
+	// let geo = MarchingSquares.generateMapGeometry(weights, iso);
 
+	// let geo = linesToGeo(lines);
+	// geo = mergeClose(geo, 0.0001);
+
+	// console.log("Unmodified", geo);
+	// console.log("MergedGeom", mergeClose(geo, 0.1))
+
+	// ctx.fillStyle = "white";
+	// ctx.strokeStyle = "white";
 
 
-	let lines = MarchingSquares.getLines(map, iso);
+	// drawGeo(ctx, geo, scale, false);
 
-	MarchingSquares.drawLines(ctx, lines, scale *4, iso);
-
-	// MarchingSquares.drawPointValues(ctx, iso, scale * 16, map);
+	// separateDisconnected(geo).forEach(g => {
+	// 	drawGeo(ctx, g, scale, false);
+	// })	
 })
 
