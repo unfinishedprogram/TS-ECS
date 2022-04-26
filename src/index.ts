@@ -48,19 +48,12 @@ step = () => {
 	registry.updateSystems(delta);
 
 	for(let i = 0; i < 10; i++){
+		ecount+=1;
 		Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
 	}
-	ecount+=10;
 
-	entityCount.textContent = `${ecount}`;
+	entityCount.textContent = `entities:${ecount}`;
 	frames = requestAnimationFrame(step);
-
-
-	// if(frames < 5000){
-	// 	frames = requestAnimationFrame(step);
-	// } else {
-	// 	console.log(frametimes)
-	// }
 }
 
 step();
