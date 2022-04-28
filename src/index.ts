@@ -9,6 +9,7 @@ import Sprite from "@/components/sprite";
 import Renderer from "./systems/renderer";
 import Sonic from "./entities/sonic";
 import Movement from "./systems/movement";
+import StatsWindow from "./util/statsWindow";
 
 let registry = new Registry();
 
@@ -22,37 +23,29 @@ registry.registerSystem(Renderer);
 let step = () => {};
 let last = performance.now();
 let frames = 0;
-let frametimes:number[] = [];
+const statsWindow = new StatsWindow();
 
-let perfCont = document.createElement("div");
-perfCont.classList.add("perfCont")
-let frametime = document.createElement("div");
-let entityCount = document.createElement("div");
-
-frametime.classList.add("perf")
-entityCount.classList.add("perf")
-
-perfCont.appendChild(frametime)
-perfCont.appendChild(entityCount)
-
-document.body.appendChild(perfCont);
-
-
-let ecount = 0;
+let entityCount = 0;
 step = () => {
 	let now = performance.now()
 	let delta = now - last;
-	frametimes.push(delta);
-	frametime.textContent = `fps:${(1000/delta).toFixed(1)}`;
+
+	frames++;
 	last = now;
 	registry.updateSystems(delta);
 
-	for(let i = 0; i < 10; i++){
-		ecount+=1;
-		Sonic(registry, Math.random(), Math.random(), Math.random(), Math.random());
+	for(let i = 0; i < 5; i++){
+		entityCount+=1;
+		Sonic(registry, Math.random()*2, Math.random()*2, Math.random()*2, Math.random()*2);
 	}
 
-	entityCount.textContent = `entities:${ecount}`;
+	statsWindow.setStat("fps", (1000/delta).toFixed(1));
+	statsWindow.setStat("frameTime", delta.toFixed(2));
+	statsWindow.setStat("entityCount", entityCount);
+	statsWindow.setStat("frame", frames);
+
+	statsWindow.updateDisplay();
+	
 	frames = requestAnimationFrame(step);
 }
 

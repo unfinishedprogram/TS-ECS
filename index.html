@@ -25,15 +25,23 @@
 			top:0;
 			left:0;
 		}
-		.perfCont {
+
+		.tracker-container {
+			display: grid;
+			grid-template-columns: auto auto auto;
 			position: absolute;
 			z-index: 100;
-		}
-		.perf {
+
 			background-color: rgba(0, 0, 0, 0.5);
 			color: white;
 			padding: 0.5rem;
 			font-family: monospace;
+		}
+		.tracker-container > *:nth-child(3n-1) {
+			padding: 0rem 0.25rem;
+		}
+		.tracker-container > *:nth-child(3n-2) {
+			text-align: right;
 		}
 		#githubLink {
 			font-family: monospace;
@@ -56,6 +64,7 @@
 			color: white;
 			margin-right: 10px;
 		}
+
 	</style>
 </body>
 </html>
