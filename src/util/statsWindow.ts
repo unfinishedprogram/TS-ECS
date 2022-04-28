@@ -4,10 +4,20 @@ export default class StatsWindow {
 	private containerElm:HTMLDivElement = document.createElement("div");
 	private valueElms:{[index:string]:HTMLElement} = {};
 	private statValues: {[index:string]:any} = {};
+	private interval;
+	
+	public static instance = new StatsWindow();
 
-	public constructor() {
+	private constructor(updateInterval:number = 100) {
 		this.containerElm.classList.add("tracker-container");
 		document.body.appendChild(this.containerElm);
+
+		this.interval = setInterval(() => this.updateDisplay(), updateInterval);
+	}
+
+	set updateInterval(updateInterval:number) {
+		clearInterval(this.interval);
+		this.interval = setInterval(() => this.updateDisplay(), updateInterval);
 	}
 
 	public setStat(label:string, value:any) {
@@ -18,7 +28,7 @@ export default class StatsWindow {
 		this.statValues[label] = value;
 	}
 
-	public updateDisplay():void {
+	private updateDisplay():void {
 		for(let label in this.statValues) {
 			this.valueElms[label].textContent = this.statValues[label];
 		}

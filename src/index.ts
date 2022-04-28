@@ -23,9 +23,8 @@ registry.registerSystem(Renderer);
 let step = () => {};
 let last = performance.now();
 let frames = 0;
-const statsWindow = new StatsWindow();
-
 let entityCount = 0;
+
 step = () => {
 	let now = performance.now()
 	let delta = now - last;
@@ -39,13 +38,11 @@ step = () => {
 		Sonic(registry, Math.random()*2, Math.random()*2, Math.random()*2, Math.random()*2);
 	}
 
-	statsWindow.setStat("fps", (1000/delta).toFixed(1));
-	statsWindow.setStat("frameTime", delta.toFixed(2));
-	statsWindow.setStat("entityCount", entityCount);
-	statsWindow.setStat("frame", frames);
+	StatsWindow.instance.setStat("fps", (1000/delta).toFixed(1));
+	StatsWindow.instance.setStat("frameTime", delta.toFixed(2));
+	StatsWindow.instance.setStat("entityCount", entityCount);
+	StatsWindow.instance.setStat("frame", frames);
 
-	statsWindow.updateDisplay();
-	
 	frames = requestAnimationFrame(step);
 }
 
