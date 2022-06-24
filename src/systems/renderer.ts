@@ -1,6 +1,6 @@
-import System from "@/ecs/system";
-import Sprite from "@/components/sprite";
-import Position from "@/components/position";
+import System from "../ecs/system";
+import Sprite from "../components/sprite";
+import Position from "../components/position";
 import * as PIXI from "pixi.js"
 
 let app = new PIXI.Application();

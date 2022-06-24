@@ -1,9 +1,9 @@
-import Registry from "@/ecs/registry";
+import Registry from "./ecs/registry";
 
 // Components
-import Position from "@/components/position";
-import Velocity from "@/components/velocity";
-import Sprite from "@/components/sprite";
+import Position from "./components/position";
+import Velocity from "./components/velocity";
+import Sprite from "./components/sprite";
 
 // Systems
 import Renderer from "./systems/renderer";

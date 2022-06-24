@@ -1,4 +1,4 @@
-import Component from "@/ecs/component";
+import Component from "../ecs/component";
 
 const Position = new Component (
 	"Position", (x:number, y:number) => {

@@ -1,6 +1,6 @@
-import System from "@/ecs/system";
-import Velocity from "@/components/velocity";
-import Position from "@/components/position";
+import System from "../ecs/system";
+import Velocity from "../components/velocity";
+import Position from "../components/position";
 
 let mouseX = 500;
 let mouseY = 500;

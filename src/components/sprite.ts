@@ -1,4 +1,4 @@
-import Component from "@/ecs/component";
+import Component from "../ecs/component";
 import * as PIXI from "pixi.js";
 
 

@@ -1,4 +1,4 @@
-import { decomposeBits } from "@/util/bitwise";
+import { decomposeBits } from "../util/bitwise";
 import Component, { ComponentInstantiator } from "./component";
 import System from "./system";
 
